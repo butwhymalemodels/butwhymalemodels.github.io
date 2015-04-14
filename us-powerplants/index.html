@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset=utf-8 />
+    <title>Power Plant Map 03</title>
+    <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+
+    <script src="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.js"></script>
+
+    <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.css" />
+    <link href='http://fonts.googleapis.com/css?family=Lato' rel='stylesheet' type='text/css'>
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: whitesmoke;
+            font-family: Lato, sans-serif;
+            color: #0D0000;
+        }
+        header {
+            padding: 6px 10%;
+        }
+        h1 {
+            display: inline-block;
+            margin-right: 20px;
+            color: #001323;
+        }
+        h2 {
+            display: inline-block;
+            color: #001323;
+        }
+        #map {
+            width: 80%;
+            height: 540px;
+            margin: 10px auto;
+        }
+        footer {
+            padding: 6px 10%;
+            width: 80%;
+        }
+        p {
+            font-size: 1em;
+            color: #001323;
+        }
+        /* Additional style rules go here! */
+        
+        .popup {
+            background: green; 
+            color: green;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>US Electric Power Generation</h1>
+        <h2>Coal, Hydro and Wind</h2>
+    </header>
+
+    <div id='map'></div>
+
+    <footer>
+        <p>Map authored by Vanessa Koenigsmark</p>
+        <p>There are lots of different types of power plants in the United States.</p>
+        <p>Click once on the map to see ll the coal, hydro and wind power plants within 50 km. Double click to narrow your search to 200 km. WOW.
+        </p>
+    </footer>
+
+    
+    <script src="power-plants-assignment.js"></script>
+    
+    <script>
+        var options = {
+            center: [40, -98.5],
+            zoom: 4,
+            doubleClickZoom: false
+        }
+        var map = L.map('map', options);
+        var tiles = L.tileLayer('http://a{s}.acetate.geoiq.com/tiles/acetate-hillshading/{z}/{x}/{y}.png', {
+            attribution: '&copy;2012 Esri & Stamen, Data from OSM and Natural Earth',
+            subdomains: '0123',
+            minZoom: 2,
+            maxZoom: 18
+        });
+        map.addLayer(tiles);
+        
+        // Begin writing your practice code here
+        var commonStyles = {
+            weight: 1,
+            stroke:1,
+            fillOpacity: .8
+        }
+//        console.log(plants);
+        
+        var coalLayer = L.geoJson(plants, {
+            pointToLayer: function (feature, latlng) {
+                return L.circleMarker(latlng, commonStyles);
+            },
+            filter: function(feature) {
+                if(feature.properties.source["Coal"]){
+                    return feature;
+                }
+            },
+            style: function(feature) {
+                return {
+                    color: '#7b1fb4',
+                    fillColor: '#7b1fb4',
+                    radius: getRadius(feature.properties.source["Coal"])
+                }
+            }
+        }).addTo(map);
+        
+        var hydroLayer = L.geoJson(plants, {
+            pointToLayer: function (feature, latlng) {
+                return L.circleMarker(latlng, commonStyles);
+            },
+            filter: function(feature) {
+                if (feature.properties.source["Hydro"]) {
+                    return feature;
+                }
+            },
+            style: function(feature) {
+                return {
+                    color: '#1f69b4',
+                    fillColor: '#1f69b4',
+                    radius: getRadius(feature.properties.source["Hydro"])
+                }
+            }
+        }).addTo(map);
+        
+        var content;
+        
+        var windLayer = L.geoJson(plants, {
+            pointToLayer: function (feature, latlng) {
+                return L.circleMarker(latlng, commonStyles);
+            },
+            filter: function(feature) {
+                if (feature.properties.source["Wind"]) {
+                    return feature;
+                }
+            },
+            style: function(feature) {
+                return {
+                    color: '#32e685',
+                    fillColor: '#32e685',
+                    radius: getRadius(feature.properties.source["Wind"])
+                }
+            }
+        }).addTo(map);
+        
+        
+        
+        
+        map.on('click', function(e) {
+            coalLayer.eachLayer(function(layer) {
+                var distance = e.latlng.distanceTo(layer.getLatLng())/1000;
+                if(distance > 500) {
+                    layer.setStyle({
+                        stroke: false,
+                        fill: false
+                    });  
+                } else {
+                    layer.setStyle({
+                        stroke: true,
+                        fill: true  
+                    });  
+               
+                    layer.bindPopup("<b>"+layer.feature.properties.plant_name+"</b><br>Capacity: <b>"+layer.feature.properties.capacity+" MW<br>"+distance.toLocaleString()+ " km</b> from your click.");
+                } 
+            });
+        });
+        
+        
+        map.on('click', function(e) {
+            hydroLayer.eachLayer(function(layer) {
+                var distance = e.latlng.distanceTo(layer.getLatLng())/1000;
+
+                if(distance > 500) {
+                    layer.setStyle({
+                        stroke: false,
+                        fill: false
+                    });  
+                } else {
+                    layer.setStyle({
+                        stroke: true,
+                        fill: true  
+                    });  
+               layer.bindPopup("<b>"+layer.feature.properties.plant_name+"</b><br>Capacity: <b>"+layer.feature.properties.capacity+" MW<br>"+distance.toLocaleString()+ " km</b> from your click.");
+                } 
+            });
+        });
+        map.on('click', function(e) {
+            windLayer.eachLayer(function(layer) {
+                var distance = e.latlng.distanceTo(layer.getLatLng())/1000;
+                console.log(distance);
+                if(distance > 500) {
+                    layer.setStyle({
+                        stroke: false,
+                        fill: false
+                    });  
+                } else {
+                    layer.setStyle({
+                        stroke: true,
+                        fill: true  
+                    });  
+               layer.bindPopup("<b>"+layer.feature.properties.plant_name+"</b><br>Capacity: <b>"+layer.feature.properties.capacity+" MW<br>"+distance.toLocaleString()+ " km</b> from your click.");
+                } 
+            });
+        });
+        
+        
+        map.on('dblclick', function(e) {
+            coalLayer.eachLayer(function(layer) {
+                var distance = e.latlng.distanceTo(layer.getLatLng())/1000;
+
+                if(distance > 200) {
+                    layer.setStyle({
+                        stroke: false,
+                        fill: false
+                    });  
+                } else {
+                    layer.setStyle({
+                        stroke: true,
+                        fill: true  
+                    });  
+               layer.bindPopup("<b>"+layer.feature.properties.plant_name+"</b><br>Capacity: <b>"+layer.feature.properties.capacity+" MW<br>"+distance.toLocaleString()+ " km</b> from your click.");
+                } 
+            });
+        });       
+        map.on('dblclick', function(e) {
+            hydroLayer.eachLayer(function(layer) {
+                var distance = e.latlng.distanceTo(layer.getLatLng())/1000;
+
+                if(distance > 200) {
+                    layer.setStyle({
+                        stroke: false,
+                        fill: false
+                    });  
+                } else {
+                    layer.setStyle({
+                        stroke: true,
+                        fill: true  
+                    });  
+               layer.bindPopup("<b>"+layer.feature.properties.plant_name+"</b><br>Capacity: <b>"+layer.feature.properties.capacity+" MW<br>"+distance.toLocaleString()+ " km</b> from your click.");
+                } 
+            });
+        });
+        map.on('dblclick', function(e) {
+            windLayer.eachLayer(function(layer) {
+                var distance = e.latlng.distanceTo(layer.getLatLng())/1000;
+
+                if(distance > 200) {
+                    layer.setStyle({
+                        stroke: false,
+                        fill: false
+                    });  
+                } else {
+                    layer.setStyle({
+                        stroke: true,
+                        fill: true  
+                    });  
+               layer.bindPopup("<b>"+layer.feature.properties.plant_name+"</b><br>Capacity: <b>"+layer.feature.properties.capacity+" MW<br>"+distance.toLocaleString()+ " km</b> from your click.");
+                } 
+            });
+        });
+        
+        
+        
+        var sourcesLayers = {
+            "<b style= 'color:#7b1fb4'>Coal</b>": coalLayer,
+            "<b style= 'color: #1f69b4'>Hydro</b>": hydroLayer,
+            "<b style= 'color: #32e685'>Wind</b>": windLayer
+        }
+        
+        L.control.layers(null, sourcesLayers, { collapsed:false }).addTo(map);
+        
+        
+        
+        
+        
+        function getRadius(val) {
+            var radius = Math.sqrt(val/Math.PI);
+            return radius * .8;   
+        }
+        
+        console.log("Hello?");
+    </script>
+    
+</body>
+
+</html>
